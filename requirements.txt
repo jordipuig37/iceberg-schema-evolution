@@ -1,0 +1,6 @@
+fastavro
+pandas
+pyarrow
+pyiceberg
+streamlit
+sqlalchemy
