@@ -1,4 +1,5 @@
 fastavro
+distutils
 pandas
 pyarrow
 pyiceberg
