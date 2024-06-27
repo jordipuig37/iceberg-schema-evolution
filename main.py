@@ -1,6 +1,7 @@
 import streamlit as st
 from metadata_explorer import main as page_metadata_explorer
 
+st.set_page_config(layout="wide")
 
 def main():
     # side bar for navigation. pages:

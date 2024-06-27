@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
+from pyiceberg.table import Table
 
 import utils as ut
 
 
-def aux_file_metadata():
+def aux_manifest_file_metadata():
     col1, col2, col3, col4, col5, col6 = st.columns(6)
     cosa_a_return = "column_sizes"
     # Create a button in each column
@@ -23,14 +24,19 @@ def aux_file_metadata():
     return cosa_a_return
 
 
-def display_manifest_file(manifest_path: str):
+def display_manifest_file(table: Table, manifest_path: str):
     manifest = ut.read_avro_to_dataframe(manifest_path)
     select_columns = [
         "status", "snapshot_id", "data_sequence_number", "file_sequence_number"
     ]
     st.table(manifest[select_columns])
-    metadata_to_view = aux_file_metadata()
-    st.table(pd.DataFrame(manifest["data_file"][0][metadata_to_view]))
+
+    metadata_to_view: str = aux_manifest_file_metadata()
+    data_file = pd.DataFrame(manifest["data_file"][0][metadata_to_view])
+    rename_key_dict = ut.get_key_to_column_name_mapping(table)
+    data_file["key"] = data_file["key"].map(rename_key_dict)
+    # process each dataframe accordingly
+    st.table(data_file.set_index("key"))
 
 
 def display_single_snapshot_(table, selected_snapshot):
@@ -63,7 +69,7 @@ def display_table_metadata(table):
     manifest_path = st.selectbox("Manifest file:", manifest_files_list)
 
     if manifest_path:
-        display_manifest_file(manifest_path)
+        display_manifest_file(table, manifest_path)
 
 
 def main():
