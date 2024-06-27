@@ -87,22 +87,18 @@ def load_iceberg_table(table_name: str) -> Table:
     return catalog.load_table(f"default.{table_name}")
 
 
-def get_table_metadata(ib_table: Table) -> pd.DataFrame:
-    mtdt = json.loads(ib_table.metadata.json())
-    metadata_df = pd.DataFrame(filter(
-            lambda t: type(t[1]) is str or type(t[1]) is int,
-            mtdt.items()
-    ))
-
-    return metadata_df
+def get_table_metadata(table: Table) -> dict:
+    """Returns the metadata of the table in a dictionary."""
+    mtdt = json.loads(table.metadata.json())
+    return mtdt
 
 
-def get_table_snapshots(ib_table: Table):
-    snapshot_history = ib_table.history()
+def get_table_snapshots(table: Table):
+    snapshot_history = table.history()
     res = list()
     for snapshot in snapshot_history:
         res.append(json.loads(
-            ib_table.snapshot_by_id(snapshot.snapshot_id).model_dump_json()
+            table.snapshot_by_id(snapshot.snapshot_id).model_dump_json()
         ))
 
     return pd.DataFrame(res).transpose()
@@ -115,3 +111,14 @@ def get_snapshot_id_list(table: Table) -> List[str]:
 
 def get_table_manifest_list(ib_table, snapshot_id):
     pass
+
+
+def get_table_last_schema(table: Table) -> pd.DataFrame:
+    return pd.DataFrame(table.schema().model_dump()["fields"])
+
+
+def get_key_to_column_name_mapping(table: Table):
+    return dict(map(
+        lambda fld: (fld.field_id, fld.name),
+        table.schema().fields
+    ))

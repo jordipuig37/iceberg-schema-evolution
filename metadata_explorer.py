@@ -48,9 +48,49 @@ def display_single_snapshot_(table, selected_snapshot):
     return manifest_list
 
 
-def display_table_metadata(table):
-    st.header("Metadata")
-    st.table(ut.get_table_metadata(table))
+def display_metadata(table: Table):
+    """This function displays the basic metadata of a table. The data shown is
+    the same data that can be found in the metadata .json
+    """
+    metadata = ut.get_table_metadata(table)
+    metadata_df = pd.DataFrame(filter(
+            lambda t: type(t[1]) is str or type(t[1]) is int,
+            metadata.items()
+    ))
+
+    metadata_df = metadata_df.set_index(0).drop(
+        index=["last_sequence_number", "format_version",
+               "default_sort_order_id", "last_partition_id",
+               "default_spec_id", "last_column_id"
+            ]
+    )
+
+    metadata_df.loc["last_updated_ms"] = pd.to_datetime(
+            metadata_df.loc["last_updated_ms"], unit="ms"
+        ).dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    schema_df = ut.get_table_last_schema(table)
+
+    n_schemas = len(metadata["schemas"])
+    n_snapshots = len(metadata["snapshots"])
+
+    col1, col2 = st.columns(2)
+    col1.subheader("Metadata")
+    col1.table(metadata_df)
+    col1.text(f"Number of schemas: {n_schemas}")
+    col1.text(f"Number of snapshots: {n_snapshots}")
+
+    col2.subheader("Schema")
+    schema_df = schema_df.set_index("id")
+    col2.table(schema_df)
+
+
+def explore_table_metadata(table: Table):
+    """Main function that given a table displays the interface to explore
+    the main components of the iceberg table metadata.
+    """
+    st.header("Overview")
+    display_metadata(table)
 
     st.header("Snapshots")
     st.table(ut.get_table_snapshots(table))
@@ -82,7 +122,7 @@ def main():
     )
     if table_path:
         table = ut.load_iceberg_table(table_path)
-        display_table_metadata(table)
+        explore_table_metadata(table)
 
 
 if __name__ == "__main__":
