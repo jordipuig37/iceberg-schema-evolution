@@ -25,7 +25,7 @@ def create_or_replace_catalog(setup_func):
                 },
             )
             assert catalog
-        except:
+        except sqlite3.DatabaseError:
             os.mkdir(WAREHOUSE_PATH)
             setup_func()
     return wrapper
@@ -93,7 +93,8 @@ def get_table_metadata(table: Table) -> dict:
     return mtdt
 
 
-def get_table_snapshots(table: Table):
+def get_table_snapshots(table: Table) -> pd.DataFrame:
+    """Get """
     snapshot_history = table.history()
     res = list()
     for snapshot in snapshot_history:
@@ -101,7 +102,7 @@ def get_table_snapshots(table: Table):
             table.snapshot_by_id(snapshot.snapshot_id).model_dump_json()
         ))
 
-    return pd.DataFrame(res).transpose()
+    return pd.DataFrame(res)
 
 
 def get_snapshot_id_list(table: Table) -> List[str]:
@@ -122,3 +123,37 @@ def get_key_to_column_name_mapping(table: Table):
         lambda fld: (fld.field_id, fld.name),
         table.schema().fields
     ))
+
+
+def get_snapshot_summary(table: Table, snapshot_id: int) -> dict:
+    return table.snapshot_by_id(snapshot_id).model_dump()["summary"]
+
+
+def convert_bytes(size_in_bytes: int) -> str:
+    """Convert size from bytes to MB or GB."""
+    if size_in_bytes >= 1024**3:  # 1 GB in bytes
+        size_in_gb = size_in_bytes / 1024**3
+        return f"{size_in_gb:.2f} GB"
+    else:
+        size_in_mb = size_in_bytes / 1024**2  # 1 MB in bytes
+        return f"{size_in_mb:.2f} MB"
+
+
+def format_number_with_spaces(number: int):
+    """Format a number string by separating thousands with a space."""
+    return f"{number:,}".replace(",", " ")
+
+
+def process_summary(summary: dict[str, str]) -> pd.DataFrame:
+    """Applies logic"""
+    new_summer = dict()
+    for k, v in summary.items():
+        if k.endswith("-size"):
+            new_summer[k] = convert_bytes(int(v))
+        elif k.endswith("-records"):
+            new_summer[k] = format_number_with_spaces(int(v))
+        else:
+            new_summer[k] = v
+
+    summary_df = pd.DataFrame(new_summer, index=["Value"])
+    return summary_df

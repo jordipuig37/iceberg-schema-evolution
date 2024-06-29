@@ -3,6 +3,7 @@ from metadata_explorer import main as page_metadata_explorer
 
 st.set_page_config(layout="wide")
 
+
 def main():
     # side bar for navigation. pages:
     #   * metadata explorer -> inprogress
@@ -22,7 +23,7 @@ def main():
     if page == "Metadata Explorer":
         page_metadata_explorer()
     else:
-        pass
+        st.markdown("Page under construction.")
 
 
 if __name__ == "__main__":
