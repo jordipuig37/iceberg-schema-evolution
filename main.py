@@ -1,4 +1,5 @@
 import streamlit as st
+import utils as ut
 from metadata_explorer import main as page_metadata_explorer
 
 st.set_page_config(layout="wide")
@@ -19,6 +20,7 @@ def main():
             "Upload Data"
         ]
     )
+    ut.setup_example_table()
 
     if page == "Metadata Explorer":
         page_metadata_explorer()

@@ -6,7 +6,6 @@ from pyiceberg.catalog import load_catalog
 from pyiceberg.catalog.sql import SqlCatalog
 import pyarrow.parquet as pq
 import pyarrow.compute as pc
-import sqlite3
 import json
 from typing import List
 
@@ -16,7 +15,9 @@ WAREHOUSE_PATH = "./data/warehouse"
 
 def create_or_replace_catalog(setup_func):
     def wrapper():
-        try:  # try to connect to the catalog
+        if not os.path.exists(WAREHOUSE_PATH):
+            os.mkdir(WAREHOUSE_PATH)
+        try:  # try to connect to the catalog and the table
             catalog = load_catalog(
                 "default",
                 **{
@@ -25,8 +26,10 @@ def create_or_replace_catalog(setup_func):
                 },
             )
             assert catalog
-        except sqlite3.DatabaseError:
-            os.mkdir(WAREHOUSE_PATH)
+
+            tbl = load_iceberg_table("taxi_dataset")
+            assert tbl
+        except:  # noqa: E722
             setup_func()
     return wrapper
 

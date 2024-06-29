@@ -212,7 +212,6 @@ def explore_table_metadata(table: Table):
 
 def main():
     st.title("Iceberg Metadata Explorer")
-    ut.setup_example_table()
 
     table_path = st.text_input(
         "Enter the path to your Iceberg table:",
